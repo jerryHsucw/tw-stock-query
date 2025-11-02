@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>台股基本資訊查詢系統</title>
+    <style>
+        /* 基礎樣式 */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 40px; background-color: #f4f7f6; }
+        .container { max-width: 700px; margin: auto; padding: 30px; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px; }
+        h2 { color: #007bff; border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-bottom: 20px; }
+
+        /* 表單樣式 */
+        form input[type="text"] { padding: 10px; border: 1px solid #ccc; border-radius: 4px; width: 200px; margin-right: 10px; }
+        form button { padding: 10px 15px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.3s; }
+        form button:hover { background-color: #218838; }
+
+        /* 錯誤和結果樣式 */
+        .error { color: #dc3545; background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 4px; margin-top: 20px; font-weight: bold; }
+        .result-box { border: 1px solid #007bff; padding: 20px; margin-top: 20px; border-radius: 8px; }
+        .result-box h3 { color: #343a40; margin-top: 0; }
+
+        /* 表格樣式 */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #e9ecef; padding: 12px; text-align: left; }
+        th { background-color: #e9ecef; }
+
+        /* 漲跌顏色 */
+        .up { color: red; font-weight: bold; }
+        .down { color: green; font-weight: bold; }
+        .flat { color: #6c757d; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>📈 台股資訊查詢</h2>
+
+    <form action="/query" method="GET">
+        <label for="stockCode">股票代碼:</label>
+        <input type="text" id="stockCode" name="code"
+               placeholder="e.g., 2330"
+               th:value="${searchCode} ?: ''" required>
+
+        <label for="queryDate">查詢月份 (YYYYMMDD):</label>
+        <input type="text" id="queryDate" name="date"
+               placeholder="e.g., 20251101"
+               th:value="${searchDate} ?: ''" required>
+
+        <button type="submit">查詢</button>
+    </form>
+
+    <div th:if="${errorDTO}" class="error">
+        <p><strong>查詢失敗！</strong></p>
+        <p th:text="${errorDTO.errorMessage}"></p>
+    </div>
+
+    <div th:if="${stockData}" th:unless="${errorDTO}" class="result-box">
+        <h3 th:text="${stockData.stockName} + ' (' + ${stockData.stockCode} + ')'"></h3>
+        <p><strong>數據日期: </strong> <span th:text="${stockData.tradeDate}"></span></p>
+
+        <table>
+            <thead>
+            <tr>
+                <th>項目</th>
+                <th>數值</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>收盤價 (Closing Price)</td>
+                <td th:text="${#numbers.formatDecimal(stockData.closingPrice, 0, 'COMMA', 2, 'POINT')}">1,500.00</td>
+            </tr>
+            <tr>
+                <td>成交股數 (Volume)</td>
+                <td th:text="${#numbers.formatInteger(stockData.volume, 0, 'COMMA')}">33,838,761</td>
+            </tr>
+            <tr>
+                <td>漲跌價差 (Change)</td>
+                <td th:text="${#numbers.formatDecimal(stockData.changeAmount, 0, 'COMMA', 2, 'POINT')}"
+                    th:classappend="${stockData.changeAmount > 0 ? 'up' : (stockData.changeAmount < 0 ? 'down' : 'flat')}">
+                    +5.00
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>
